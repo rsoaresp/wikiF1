@@ -13,7 +13,8 @@ import pandas as pd
 
 import unidecode
 
-import matplotlib.pylab as plt
+from bokeh.models import HoverTool
+from bokeh.plotting import figure, output_file, show, ColumnDataSource
 
 from joblib import Parallel, delayed
 
@@ -200,5 +201,51 @@ def Circuits(race, y0, yf):
 
     df["fastest lap"] = driverFastest
     df["fastest lap (constructor)"] = driverFastestC
+    
+    
 
     return df
+
+
+def makeGraph(race, y0, yf):
+    
+    df = Circuits(race, y0, yf)
+    df["date"] = df.index
+    
+    source = ColumnDataSource(df)
+    
+    output_file(race + ".html")
+    
+    title_str = "lap times for the " + race + " grand prix"
+    
+    
+    
+    p = figure(title = title_str,
+               x_axis_label = 'year',
+               y_axis_label = "seconds",
+               x_axis_type = "datetime")
+    
+    tips1 = [("lap time", "@pole"),
+             ("driver", "@{pole position}"),
+             ("driver", "@{pole position (constructor)}")]
+    
+    tips2 = [("lap time", "@fastest"),
+             ("driver", "@{fastest lap}"),
+             ("constructor", "@{fastest lap (constructor)}")]
+    
+    
+    p.line("date", "pole", line_color = "red", legend = "pole's time", source = source)
+    c1 = p.circle("date", "pole", fill_color = "red", size = 8, source = source)
+    
+    c1_hover = HoverTool(renderers=[c1], tooltips=tips1)
+    p.add_tools(c1_hover)
+    
+    p.line("date", "fastest", line_color = "blue", legend = "fastest lap time", source = source)
+    c2 = p.circle("date", "fastest", fill_color = "blue", size = 8, source = source)        
+
+    c2_hover = HoverTool(renderers=[c2], tooltips=tips2)
+    p.add_tools(c2_hover)
+    
+    show(p)
+    
+    return None
