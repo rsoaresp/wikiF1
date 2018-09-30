@@ -13,8 +13,9 @@ import pandas as pd
 
 import unidecode
 
+import bokeh.palettes as palettes
 from bokeh.models import HoverTool
-from bokeh.plotting import figure, output_file, show, ColumnDataSource
+from bokeh.plotting import figure, output_file, show, ColumnDataSource, gridplot
 
 from joblib import Parallel, delayed
 
@@ -207,12 +208,36 @@ def Circuits(race, y0, yf):
     return df
 
 
-def makeGraph(race, y0, yf):
+def CircuitStats(race, y0, yf):
+    """Creates a series of graphs with stats of the chosen race
+    
+    Using the data frame generates by the function Circuits, we use the Bokeh
+    library to create a series of graphs with information about the chosen
+    race.
+    
+    Arguments
+    race -- The name of the race desired, Brazilian, French, Italian...
+    y0 -- The first year of the time range
+    yf -- The last year of the time range (inclusive)
+    
+    Example
+    CircuitStats('Italian', 1950, 2017) -- Returns the informations about the Italian
+    race from 1950 to 2017 (inclusive).
+    """
     
     df = Circuits(race, y0, yf)
     df["date"] = df.index
+
+
+    df2 = df.loc[:, "first (constructor)"].value_counts().to_frame()
+    df2["constructor"] = df2.index
+    df2["temp"] = range(0, len(df2))
+    df2.set_index("temp", drop = True, inplace = True)
+    
+    df2["color"] = palettes.plasma(len(df2))
     
     source = ColumnDataSource(df)
+    source2 = ColumnDataSource(df2)
     
     output_file(race + ".html")
     
@@ -246,6 +271,18 @@ def makeGraph(race, y0, yf):
     c2_hover = HoverTool(renderers=[c2], tooltips=tips2)
     p.add_tools(c2_hover)
     
-    show(p)
+    q = figure(title = "Winners (constructor)", x_range = df2["constructor"])
+    q.xaxis.major_label_orientation = np.pi/3
+    
+    q.vbar(x = "constructor",
+           top = "first (constructor)",
+           width = 0.9,
+           legend = "Number of wins, by constructors",
+           color = "color",
+           source = source2)
+
+    
+    grid = gridplot([[p, q]])
+    show(grid)
     
     return None
