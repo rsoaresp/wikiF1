@@ -11,7 +11,7 @@ We recommend installing the [Anaconda distribution](https://anaconda.org/anacond
 
 ## Example
 
-[Italian](Italian.html)
+The repo constains an example for the Italian Grand Prix (the file ```Italian.html```)
 
 ## Authors
 
